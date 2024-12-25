@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Audio Streaming</title>
+</head>
+<body>
+  <h1>Audio Streaming with WebSocket</h1>
+  <button id="start">Start</button>
+  <button id="stop">Stop</button>
+  <p id="status">Status: Idle</p>
+
+  <script>
+    const startButton = document.getElementById("start");
+    const stopButton = document.getElementById("stop");
+    const statusDisplay = document.getElementById("status");
+
+    let mediaRecorder;
+    let socket;
+
+    startButton.addEventListener("click", async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(stream, { mimeType: "audio/webm" });
+
+        // Connect to the WebSocket server
+        socket = new WebSocket("ws://127.0.0.1:8000/ws/audio/");
+
+        socket.onopen = () => {
+          statusDisplay.innerText = "Status: Connected and recording...";
+          mediaRecorder.start(1000); // Emit chunks every second
+        };
+
+        socket.onmessage = (event) => {
+          console.log("Transcription from server:", event.data);
+        };
+
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data.size > 0 && socket.readyState === WebSocket.OPEN) {
+            socket.send(event.data);
+          }
+        };
+
+        stopButton.addEventListener("click", () => {
+          mediaRecorder.stop();
+          socket.close();
+          statusDisplay.innerText = "Status: Stopped";
+        });
+      } catch (err) {
+        console.error("Error starting audio capture:", err);
+      }
+    });
+  </script>
+</body>
+</html>

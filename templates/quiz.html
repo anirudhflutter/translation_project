@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personality Quiz</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2em;
+            margin-bottom: 20px;
+        }
+
+        .question {
+            margin-bottom: 40px;
+        }
+
+        .question p {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
+
+        .meme-options {
+            display: flex;
+            overflow-x: auto;
+            gap: 20px;
+            padding: 10px;
+            justify-content: start;
+        }
+
+        .meme-option {
+            flex: 0 0 auto;
+            width: 200px; /* Make the meme images big enough */
+            cursor: pointer;
+            transition: transform 0.3s ease;
+            text-align: center;
+        }
+
+        .meme-option img {
+            width: 100%;  /* Makes memes responsive */
+            height: 200px; /* Ensure all images have the same height */
+            object-fit: cover; /* Crop the image to fit */
+            border-radius: 8px;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .meme-option p {
+            font-size: 1em;
+            margin-top: 10px;
+            color: #333;
+        }
+
+        .selected {
+            background-color: #ffdb58; /* Selected option background color */
+            transform: scale(1.05);  /* Slight scale effect when selected */
+        }
+
+        button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 1.2em;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Personality Quiz</h1>
+
+    <form method="POST">
+        {% csrf_token %}
+        
+        {% for question in questions %}
+            <div class="question">
+                <p>{{ question.text }}</p>
+                
+                <div class="meme-options">
+                    {% for meme in question.meme_choices.all %}
+                        <div class="meme-option" data-question-id="{{ question.id }}" data-meme-id="{{ meme.id }}">
+                            <img src="{{ meme.image.url }}" alt="Meme option">
+                            <p>{{ meme.text }}</p>  <!-- Add text under each meme -->
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endfor %}
+
+        <button type="submit">Submit</button>
+    </form>
+
+    <script>
+        // JavaScript to handle meme option selection and background color change
+        document.querySelectorAll('.meme-option').forEach(option => {
+            option.addEventListener('click', function() {
+                // Get the question ID to ensure selections are handled per question
+                const questionId = this.getAttribute('data-question-id');
+                
+                // Find all meme options for the current question
+                const questionOptions = document.querySelectorAll(`.meme-option[data-question-id='${questionId}']`);
+                
+                // Deselect any previously selected option within the same question
+                questionOptions.forEach(opt => {
+                    opt.classList.remove('selected');
+                });
+
+                // Select the clicked option
+                this.classList.add('selected');
+            });
+        });
+    </script>
+
+</body>
+</html>
